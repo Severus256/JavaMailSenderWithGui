@@ -5,9 +5,25 @@
  */
 package sendmailgui;
 
+import java.awt.Point;
+import java.awt.Rectangle;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.util.Properties;
+import javax.mail.Message;
+import javax.mail.MessagingException;
+import javax.mail.PasswordAuthentication;
+import javax.mail.Session;
+import javax.mail.Transport;
+import javax.mail.internet.InternetAddress;
+import javax.mail.internet.MimeMessage;
+import javax.swing.JButton;
+import javax.swing.JFrame;
 import javax.swing.JMenu;
 import javax.swing.JMenuBar;
 import javax.swing.JMenuItem;
+import javax.swing.JRadioButton;
+import javax.swing.JTextField;
 
 /**
  *
@@ -19,23 +35,64 @@ public class MainFrame extends javax.swing.JFrame {
      * Creates new form MainFrame
      */
     private JMenu _menuMail;
+    private Mailer mailer;
+    private JButton btnAttach;
     private JMenuItem _itemSettings;
     private JMenuBar _menuBar;
-    
-    
-    private void onSettingsClick(JMenuItem _item) {
-        
-    }
-    
-    
+    private ActionListener onSettingsClick;
+    private JFrame settingsFrame;
+    private JFrame advSettingsFrame;
+
     public MainFrame() {
+        mailer = new Mailer(true);
         _menuBar = new JMenuBar();
         _menuMail = new JMenu("Mail");
         _itemSettings = new JMenuItem("Settings");
         _menuMail.add(_itemSettings);
+        onSettingsClick = new ActionListener() {
+
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                // тут открытие окна настроек
+                // JFrame settingsFrame = new JFrame("Settings");
+                // settingsFrame.setVisible(true);
+                // JInternalFrame settingsFrame = new JInternalFrame("Settings");
+                //   settingsFrame.setEnabled(true);
+                //   settingsFrame.setVisible(true);
+                settingsFrame = createSettingsFrame();
+                settingsFrame.setVisible(true);
+            }
+        };
+        _itemSettings.addActionListener(onSettingsClick);
         _menuBar.add(_menuMail);
         this.setJMenuBar(_menuBar);
+
         initComponents();
+    }
+
+    private Rectangle setSettingsSize() {
+        Rectangle bounds = super.getBounds();
+        bounds.height -= 25;
+        bounds.width -= 25;
+
+        return bounds;
+    }
+
+    private JFrame createSettingsFrame() {
+        JButton btnSave = new JButton("Сохранить");
+        JButton btnCancel = new JButton("Отменить");
+        JTextField txtLogin = new JTextField();
+        JTextField txtPassword = new JTextField();
+        Point curLoc = getLocation();
+        //Rectangle bounds = super.getBounds();
+        JFrame fr = new JFrame("Settings");
+        fr.setLocation(curLoc);
+        fr.setDefaultCloseOperation(JFrame.HIDE_ON_CLOSE);
+        fr.setBounds(setSettingsSize());
+        fr.setResizable(false);
+        /*                  Добавление компонентов                                */
+
+        return fr;
     }
 
     /**
@@ -48,24 +105,110 @@ public class MainFrame extends javax.swing.JFrame {
     private void initComponents() {
 
         jMenu1 = new javax.swing.JMenu();
+        txtRecivier = new javax.swing.JTextField();
+        jLabel1 = new javax.swing.JLabel();
+        jLabel2 = new javax.swing.JLabel();
+        btnSend = new javax.swing.JButton();
+        jLabel3 = new javax.swing.JLabel();
+        txtSubject = new javax.swing.JTextField();
+        jScrollPane1 = new javax.swing.JScrollPane();
+        txtText = new javax.swing.JTextArea();
 
         jMenu1.setText("jMenu1");
+        jMenu1.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                jMenu1ActionPerformed(evt);
+            }
+        });
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
+        setTitle("Mail");
+        setResizable(false);
+
+        jLabel1.setText("Получатель");
+
+        jLabel2.setText("Текст");
+
+        btnSend.setText("Отправить");
+        btnSend.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                btnSendActionPerformed(evt);
+            }
+        });
+
+        jLabel3.setText("Тема");
+
+        txtText.setColumns(20);
+        txtText.setRows(5);
+        jScrollPane1.setViewportView(txtText);
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
         layout.setHorizontalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGap(0, 400, Short.MAX_VALUE)
+            .addGroup(layout.createSequentialGroup()
+                .addContainerGap()
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING, false)
+                    .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 370, Short.MAX_VALUE)
+                    .addComponent(jLabel1, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.PREFERRED_SIZE, 92, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(txtRecivier)
+                    .addComponent(btnSend, javax.swing.GroupLayout.PREFERRED_SIZE, 113, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(jLabel2, javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(txtSubject)
+                    .addComponent(jLabel3, javax.swing.GroupLayout.Alignment.LEADING))
+                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGap(0, 300, Short.MAX_VALUE)
+            .addGroup(layout.createSequentialGroup()
+                .addGap(29, 29, 29)
+                .addComponent(jLabel1)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(txtRecivier, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 32, Short.MAX_VALUE)
+                .addComponent(jLabel3)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(txtSubject, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addGap(11, 11, 11)
+                .addComponent(jLabel2)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 122, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addGap(18, 18, 18)
+                .addComponent(btnSend)
+                .addContainerGap())
         );
 
         pack();
     }// </editor-fold>//GEN-END:initComponents
+
+    private void jMenu1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jMenu1ActionPerformed
+        // TODO add your handling code here:
+    }//GEN-LAST:event_jMenu1ActionPerformed
+
+    private void btnSendActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnSendActionPerformed
+
+        Session session = Session.getInstance(mailer.getProps(), new javax.mail.Authenticator() {
+            @Override
+            protected PasswordAuthentication getPasswordAuthentication() {
+                return new PasswordAuthentication(mailer.getLogin(), mailer.getPassword());
+            }
+        });
+        
+        try {
+            Message message = new MimeMessage(session);
+            message.setFrom(new InternetAddress(mailer.getLogin()));
+            message.setRecipients(Message.RecipientType.TO, InternetAddress.parse(txtRecivier.getText().toString()));
+            message.setSubject(txtSubject.getText().toString());
+            message.setText(txtText.getText().toString());
+            Transport.send(message);
+       
+        } catch (MessagingException e) {
+            throw new RuntimeException(e);
+
+        }
+
+
+    }//GEN-LAST:event_btnSendActionPerformed
 
     /**
      * @param args the command line arguments
@@ -103,6 +246,14 @@ public class MainFrame extends javax.swing.JFrame {
     }
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
+    private javax.swing.JButton btnSend;
+    private javax.swing.JLabel jLabel1;
+    private javax.swing.JLabel jLabel2;
+    private javax.swing.JLabel jLabel3;
     private javax.swing.JMenu jMenu1;
+    private javax.swing.JScrollPane jScrollPane1;
+    private javax.swing.JTextField txtRecivier;
+    private javax.swing.JTextField txtSubject;
+    private javax.swing.JTextArea txtText;
     // End of variables declaration//GEN-END:variables
 }
